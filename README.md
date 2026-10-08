@@ -16,7 +16,7 @@ A **local-first, live responsive website preview workspace**, driven by the inde
 
 ## Local use
 
-Prerequisites: **Node.js 22+** and PFx Preview Core running on Linux with its required Chromium and OS isolation features. Core currently **does not support native Windows browser isolation**. On Windows, use an appropriately secured Linux environment instead; do not expose Core over the public network.
+For **source development** (not the portable ZIP): Node.js 22+ and PFx Preview Core running on Linux with its existing namespace isolation, or the experimental opt-in single-user Windows Core. The packaged Windows build described below does not require Node.js installation.
 
 In the Core repository, start the real engine with a strong secret:
 
@@ -32,7 +32,7 @@ PFX_RESPONSIVE_CORE_TOKEN='replace-with-a-long-private-secret' npm start
 
 Open <http://127.0.0.1:4188/> on the same machine. Enter a public HTTP(S) URL, select **Open previews**, then choose, resize, interact with or download any live viewport. Core's default loopback address is `http://127.0.0.1:4177`; the app's local web server is `http://127.0.0.1:4188`.
 
-If the local Core cannot start because the host does not support its filesystem/PID/user/network namespace isolation, the interface stays disconnected. Do not disable the security checks to force it to work.
+Linux Core requires its filesystem/PID/user/network namespace sandbox. Windows portable mode is explicitly separate and less isolated; never disable or misrepresent Linux security checks to force startup.
 
 ## Development and checks
 
@@ -53,3 +53,23 @@ GitHub Actions verifies source syntax and deterministic API, authorization, stre
 - Up to 4 views share Core's overall session capacity. Cross-tab owner access is blocked at the gateway. Per-tenant kernel CPU/RAM/process isolation and independent security review for public multi-user hosting have **not** been completed.
 - Website-specific security challenges, anti-bot controls, unsupported features, and JavaScript/network failures may prevent a correct preview. Core never bypasses website protections.
 - For the detailed wire contract and remaining release blockers see [Core API contract](https://github.com/pfxamd/PFx-Preview-Core/blob/main/docs/API-CONTRACT-v1.md) and [Core security model](https://github.com/pfxamd/PFx-Preview-Core/blob/main/SECURITY.md).
+
+## Portable Windows x64 alpha (build artifact, not production-hosting release)
+
+The GitHub Actions `windows-portable` job builds `PFx-Responsive-Windows-x64.zip`
+from this application and a **pinned snapshot** of the separately published Core.
+It contains `PFx Responsive.exe`, a local Node.js 22 binary, Chromium, both local
+HTTP services, the complete UI, and all runtime dependencies. After extraction,
+**double-click `PFx Responsive.exe`**; Firefox opens if installed, otherwise the
+default browser opens. Close using the tray icon's **Exit** command. No Docker,
+manual Node.js/Chromium install, or runtime GitHub dependency. An Internet
+connection is needed to preview external sites.
+
+This is experimental **local single-user Windows browsing**. The Windows Core
+retains its egress guard and URL checks but does not provide the Linux
+namespace/chroot network isolation or per-tenant OS quotas. It cannot serve
+strangers over a network and is not approved for public deployment.
+
+Windows packaging and extraction tests run on GitHub Actions, not on this
+Linux development environment. An artifact is trustworthy only after a
+Windows build, app launch and real screenshot test all pass.

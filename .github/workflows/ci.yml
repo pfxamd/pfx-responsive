@@ -68,3 +68,41 @@ jobs:
         run: |
           tail -25 /tmp/pfx-core.log 2>/dev/null || true
           tail -25 /tmp/pfx-app.log 2>/dev/null || true
+
+  windows-portable:
+    needs: foundation
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy pinned Core at build time (no runtime GitHub dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: pfxamd/PFx-Preview-Core
+          ref: e527e7841f7e6f61d730b523f36aacc327ad7f14
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Bundle Core dependencies and Chromium privately inside the portable folder
+        shell: pwsh
+        run: |
+          $env:PLAYWRIGHT_BROWSERS_PATH = '0'
+          Push-Location core
+          npm install --ignore-scripts --no-audit --no-fund
+          npx playwright-core install chromium
+          Pop-Location
+          ./scripts/package-windows.ps1
+      - name: Smoke-test the double-click launcher and bundled real Chromium
+        shell: pwsh
+        run: ./scripts/test-windows-portable.ps1
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: PFx-Responsive-Windows-x64
+          path: out/PFx-Responsive-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30

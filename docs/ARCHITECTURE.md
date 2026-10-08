@@ -23,3 +23,20 @@ The current build is **only a trusted local development experience**. There is n
 ## UI testing
 
 Local visual layout checks have been performed using headless Chromium with a controlled synthetic network fixture. These are **UI interaction tests**, not proof of actual Core rendering compatibility. The node tests prove gateway/workspace behavior under mocked Core responses. Real end-to-end integration requires the Linux Core sandbox and has not been asserted as proven by those tests.
+
+## Windows portable distribution
+
+The portable ZIP contains an **independent copied snapshot** of the Core (selected
+at build time), native Node 22 x64 runtime, Playwright Chromium binaries, all
+application code, and a self-contained .NET 8 Windows desktop launcher. No
+GitHub access is required when starting the extracted program. The launcher
+keeps both services bound to loopback, creates a fresh random Core credential
+per launch, starts Core first, then the local application gateway, opens
+Firefox if installed (or the system default browser), and provides a tray
+Exit action that terminates both services. The Core remains independently
+published and tested in its own repository.
+
+This Windows mode does **not** implement the Linux namespace sandbox. It is
+strictly for the local operator and does not support public hosting or
+mutually untrusted tenants. The GitHub Windows CI validates the actual
+extracted ZIP and its real screenshot path before publishing an artifact.

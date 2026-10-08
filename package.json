@@ -1,6 +1,6 @@
 {
   "name": "pfx-responsive",
-  "version": "0.2.0-alpha.2",
+  "version": "0.3.0-alpha.0",
   "private": true,
   "type": "module",
   "description": "PFx Responsive local-first interactive multiview browser studio",
