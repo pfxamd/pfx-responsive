@@ -2,9 +2,17 @@
 // No fake frames or mocked HTTP methods. The Linux Core must be running.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { chromium } from '../core/node_modules/playwright-core/index.mjs';
+import { chromium, firefox, webkit } from '../core/node_modules/playwright-core/index.mjs';
 
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browserName = process.env.PFX_E2E_BROWSER || 'chromium';
+const browsers = { chromium, firefox, webkit };
+if (!Object.hasOwn(browsers, browserName)) throw new Error(`Unsupported test browser: ${browserName}`);
+// This browser displays the UI. Core always renders target websites using
+// isolated Chromium; testing different UI engines must not weaken Core.
+const browser = await browsers[browserName].launch({
+  headless: true,
+  ...(browserName === 'chromium' ? { args: ['--no-sandbox'] } : {})
+});
 const page = await browser.newPage({viewport: {width: 1550, height: 900}, acceptDownloads: true});
 const problems = [];
 page.on('pageerror', error => problems.push(error.message));
@@ -46,7 +54,7 @@ try {
   await page.locator('#closeAll').click();
   await page.waitForFunction(() => document.querySelectorAll('.preview-card').length === 0, null, {timeout: 30_000});
   if(problems.length) throw new Error(`Browser errors: ${problems.join('; ')}`);
-  console.log(JSON.stringify({status:'PASS',viewports:3,resize:'420x820',screenshotBytes:png.byteLength,liveFrame:true,closedSessions:true,pageErrors:0}));
+  console.log(JSON.stringify({status:'PASS',browser:browserName,viewports:3,resize:'420x820',screenshotBytes:png.byteLength,liveFrame:true,closedSessions:true,pageErrors:0}));
 } finally {
   await page.close().catch(() => {});
   await browser.close().catch(() => {});

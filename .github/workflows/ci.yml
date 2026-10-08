@@ -17,7 +17,11 @@ jobs:
   real-browser-integration:
     needs: foundation
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - name: Checkout pinned isolated Core for integration test
@@ -33,7 +37,10 @@ jobs:
         working-directory: core
         run: |
           npm install --ignore-scripts --no-audit --no-fund
+          # The Core always needs Chromium; the UI is exercised in the
+          # selected browser engine independently.
           npx playwright-core install chromium
+          npx playwright-core install --with-deps ${{ matrix.browser }}
       - name: Verify namespace isolation prerequisites
         run: bash core/scripts/prepare-ci-netns.sh
       - name: Run actual Core and local app
@@ -52,7 +59,9 @@ jobs:
           echo 'Core or app did not start:'
           tail -20 /tmp/pfx-core.log /tmp/pfx-app.log
           exit 1
-      - name: Real Chromium UI session / frame / screenshot integration
+      - name: Real UI session / frame / screenshot integration
+        env:
+          PFX_E2E_BROWSER: ${{ matrix.browser }}
         run: node scripts/e2e-ui.mjs
       - name: Report service diagnostics on failure
         if: failure()

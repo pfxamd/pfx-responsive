@@ -43,7 +43,7 @@ npm test
 
 `src/preview-client.js` is an independent local copy of Core's v1 protocol adapter. `src/browser-client.js` is the same-origin client for the local gateway; `src/workspace.js` owns view/session lifecycles; `public/` holds the complete interface. No runtime files or fonts are fetched from the Core or branding repositories. The untouched `public/logo.svg` asset comes from `pfxamd/pfx-brand-assets` (`logos/logo.svg`).
 
-GitHub Actions verifies source syntax and deterministic API, authorization, streaming, resource-cleanup and concurrency tests. Chromium rendering on the actual deployment environment and Firefox/WebKit compatibility remain separate acceptance checks before shipping a general release.
+GitHub Actions verifies source syntax and deterministic API, authorization, streaming, resource-cleanup and concurrency tests. The real-app integration matrix exercises the **UI** in Chromium, Firefox and Linux WebKit against an actual isolated Chromium Core, checking live frames, viewport resizing, PNG downloads and session cleanup. Linux WebKit is **not** a substitute for a Safari/macOS or iOS device test; the actual deployment environment must be validated separately before a general release.
 
 ## Security and limitations
 
