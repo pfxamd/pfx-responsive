@@ -327,7 +327,7 @@ window.addEventListener('pagehide',()=>{
 });
 async function initialize(){
   try{await client.bootstrap();await checkConnection();}
-  catch{ $('connectionText').textContent='App service unavailable';showMessage('Local gateway unavailable. Reload the app.'); }
+  catch(error){ $('connectionText').textContent='App service unavailable';showMessage(error?.message || 'Local gateway unavailable. Reload the app.'); }
 }
 void initialize();
 setInterval(()=>{if(client.key) void checkConnection();},25_000);

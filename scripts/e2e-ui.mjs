@@ -14,7 +14,11 @@ try {
   try {
     await page.waitForFunction(() => document.querySelector('#connectionText')?.textContent === 'Core connected', null, {timeout: 20_000});
   } catch (error) {
-    console.log(JSON.stringify({ connectionText: await page.locator('#connectionText').textContent(), pageErrors: problems }));
+    const bootstrapDiagnostic = await page.evaluate(async () => {
+      try {const r = await fetch('/api/bootstrap', {headers:{'x-pfx-app':'1'}});return {status:r.status, error:r.ok?null:(await r.json()).error};}
+      catch(e){return {error:e.message};}
+    });
+    console.log(JSON.stringify({ connectionText: await page.locator('#connectionText').textContent(), bootstrapDiagnostic, pageErrors: problems }));
     throw error;
   }
   assert.equal(await page.locator('#openButton').isEnabled(), true);

@@ -26,3 +26,16 @@ test('browser stream reads valid event and rejects malformed/oversized frames',a
  const c=make('event: error\ndata: {"error":"Core unavailable"}\n\n');
  await assert.rejects(async()=>{for await(const _ of c.stream('x')){}},/Core unavailable/);
 });
+
+test('default browser fetch retains the global receiver required by Chromium', async () => {
+  const saved = globalThis.fetch;
+  globalThis.fetch = function (_url, _options) {
+    assert.equal(this, globalThis);
+    return Promise.resolve(response(JSON.stringify({ workspaceKey: 'browser-key' })));
+  };
+  try {
+    const client = new LocalGatewayClient();
+    const value = await client.bootstrap();
+    assert.equal(value.workspaceKey, 'browser-key');
+  } finally { globalThis.fetch = saved; }
+});

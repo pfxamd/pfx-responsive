@@ -1,7 +1,7 @@
 // Same-origin local gateway client. The Core bearer token never enters the DOM
 // or browser JavaScript. The workspace key lives in memory for this tab only.
 export class LocalGatewayClient {
-  constructor({ fetchImpl = fetch } = {}) {
+  constructor({ fetchImpl = (...args) => globalThis.fetch(...args) } = {}) {
     this.fetchImpl = fetchImpl;
     this.key = null;
   }
