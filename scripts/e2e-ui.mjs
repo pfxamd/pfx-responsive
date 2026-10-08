@@ -16,6 +16,7 @@ const browser = await browsers[browserName].launch({
 const page = await browser.newPage({viewport: {width: 1550, height: 900}, acceptDownloads: true});
 const problems = [];
 const apiFailures = [];
+const apiRequestMetadata = [];
 page.on('pageerror', error => problems.push(error.message));
 page.on('console', message => { if (message.type() === 'error') problems.push(message.text()); });
 page.on('response', response => {
@@ -25,6 +26,14 @@ page.on('response', response => {
 });
 page.on('requestfailed', req => {
   if (req.url().includes('/api/')) apiFailures.push({path:new URL(req.url()).pathname, error:req.failure()?.errorText});
+});
+page.on('request', request => {
+  if (new URL(request.url()).pathname !== '/api/sessions') return;
+  // Record only non-secret fetch metadata; never workspace IDs or credentials.
+  void request.allHeaders().then(headers => apiRequestMetadata.push({
+    method: request.method(), appHeaderPresent: headers['x-pfx-app'] === '1',
+    origin: headers.origin ?? null, fetchSite: headers['sec-fetch-site'] ?? null
+  })).catch(() => {});
 });
 try {
   await page.goto('http://127.0.0.1:4188/', { waitUntil: 'domcontentloaded', timeout: 20_000 });
@@ -52,7 +61,7 @@ try {
       message:card.querySelector('[data-field=url]')?.textContent,
       placeholder:card.querySelector('.screen-placeholder span')?.textContent
     })));
-    console.log(JSON.stringify({browser:browserName,phase:'live-views',cards,apiFailures,pageErrors:problems}));
+    console.log(JSON.stringify({browser:browserName,phase:'live-views',cards,apiFailures,apiRequestMetadata,pageErrors:problems}));
     throw error;
   }
   await page.waitForFunction(() => [...document.querySelectorAll('.device-screen img')].some(image =>
