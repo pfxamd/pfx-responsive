@@ -1,4 +1,4 @@
-name: PFx Responsive Foundation CI
+name: PFx Responsive Local App CI
 on:
   push:
   pull_request:

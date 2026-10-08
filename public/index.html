@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15171d">
+  <meta name="description" content="PFx Responsive — a local-first live responsive preview workspace.">
+  <title>PFx Responsive — Live workspace</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="application">
+    <header class="topbar">
+      <div class="brand" aria-label="PFx Responsive">
+        <div class="brand-emblem"><img src="/logo.svg" alt="PFxamd logo"></div>
+        <div class="brand-name"><strong>PFx <span>Responsive</span></strong><small>DEVELOPMENT WORKSPACE</small></div>
+        <span class="alpha">LOCAL ALPHA</span>
+      </div>
+      <div class="top-actions">
+        <span class="top-divider"></span>
+        <div class="connection connection-pending" id="connection" aria-live="polite"><span class="connection-light"></span><span id="connectionText">Checking Core</span></div>
+        <button id="connectionRetry" class="icon-button small" title="Check Core connection" aria-label="Check Core connection" data-icon="refresh-cw"></button>
+        <span class="top-divider"></span>
+        <button id="themeToggle" class="icon-button" title="Toggle light / dark theme" aria-label="Toggle light and dark theme" data-icon="sun"></button>
+      </div>
+    </header>
+    <section class="addressbar" aria-label="Preview website">
+      <div class="address-label"><span class="address-kicker">TARGET WEBSITE</span><span class="address-step">01 / SOURCE</span></div>
+      <form id="urlForm" class="address-form" autocomplete="off">
+        <span class="address-link" data-icon="globe"></span>
+        <input id="urlInput" type="url" inputmode="url" spellcheck="false" placeholder="https://your-website.com" aria-label="Website address" required value="https://example.com/">
+        <button type="button" id="clearUrl" class="clear-button" title="Clear URL" aria-label="Clear URL" data-icon="x"></button>
+        <button class="primary-button" id="openButton" type="submit"><span data-icon="arrow-up-right"></span><span>Open previews</span></button>
+      </form>
+      <button id="reloadAll" type="button" class="action-button" title="Reload every active preview"><span data-icon="rotate-cw"></span><span>Reload all</span></button>
+    </section>
+    <div class="work-area">
+      <aside class="control-panel" aria-label="Viewport presets and current views">
+        <div class="panel-top"><div class="section-label">VIEWPORT LIBRARY <span>02 / DEVICES</span></div>
+          <div class="panel-heading"><h2>Devices</h2><span class="device-count" id="deviceCount">00 / 04</span></div>
+          <p class="panel-desc">Test the same website across real viewport sizes.</p>
+        </div>
+        <div class="preset-stack" id="presetList" aria-label="Add a preset viewport">
+          <button class="preset" data-preset="mobile" type="button"><span class="preset-icon" data-icon="smartphone"></span><span class="preset-description"><strong>Mobile</strong><small>390 × 844</small></span><span class="preset-plus" data-icon="plus"></span></button>
+          <button class="preset" data-preset="tablet" type="button"><span class="preset-icon" data-icon="tablet"></span><span class="preset-description"><strong>Tablet</strong><small>768 × 1024</small></span><span class="preset-plus" data-icon="plus"></span></button>
+          <button class="preset" data-preset="desktop" type="button"><span class="preset-icon" data-icon="monitor"></span><span class="preset-description"><strong>Desktop</strong><small>1440 × 900</small></span><span class="preset-plus" data-icon="plus"></span></button>
+        </div>
+        <div class="panel-rule"></div>
+        <div class="section-label">ACTIVE VIEWS <span id="activeCount">00</span></div>
+        <div class="active-views" id="activeViews"><p class="quiet-note">Your viewports will appear here.</p></div>
+        <div class="panel-foot"><div class="privacy-mark" data-icon="shield-check"></div><div><strong>Local by design</strong><span>Core credentials stay on your machine.</span></div></div>
+      </aside>
+      <main class="canvas-area" aria-label="Live preview canvas">
+        <div class="canvas-header"><div class="canvas-heading"><div class="section-label">RESPONSIVE CANVAS <span>03 / WORKSPACE</span></div><div class="canvas-heading-row"><h1>Live previews</h1><span class="canvas-subtitle" id="canvasSubtitle">Ready for your first session</span></div></div>
+          <div class="canvas-tools"><span class="live-label"><i></i> INTERACTIVE</span><button id="closeAll" class="text-button" type="button">Clear canvas <span data-icon="x"></span></button></div>
+        </div>
+        <div class="stage" id="stage"><div class="empty-state" id="emptyState"><div class="empty-illustration" aria-hidden="true"><div class="empty-frame frame-wide"></div><div class="empty-frame frame-mid"></div><div class="empty-frame frame-tall"></div><span class="empty-cross cross-a">+</span><span class="empty-cross cross-b">+</span></div><div class="empty-eyebrow">LIVE DEVICE TESTING</div><h2>Your canvas is ready.</h2><p>Enter a website and select <strong>Open previews</strong> to inspect it on multiple screen sizes.</p><span class="empty-caption">Nothing is rendered until a browser session starts.</span></div></div>
+      </main>
+      <aside class="details-panel" aria-label="Selected viewport settings">
+        <div class="section-label">INSPECTOR <span>04 / CONTROLS</span></div>
+        <div class="inspector-heading"><h2>Properties</h2><span data-icon="sliders-horizontal"></span></div>
+        <div id="inspectorEmpty" class="inspector-empty"><span class="inspector-visual" data-icon="mouse-pointer-2"></span><h3>No viewport selected</h3><p>Select a preview to adjust dimensions and send input.</p></div>
+        <div id="inspectorContent" class="inspector-content" hidden>
+          <div class="selected-view"><span class="selected-indicator"></span><div><small>CURRENT VIEWPORT</small><strong id="selectedLabel">Mobile</strong></div><span id="selectedStatus">READY</span></div>
+          <div class="setting-group"><div class="setting-title">DIMENSIONS <span>CSS PIXELS</span></div><div class="dimension-row"><label>Width<input id="widthInput" type="number" min="240" max="3840" step="1" value="390"></label><span class="dimension-multiply">×</span><label>Height<input id="heightInput" type="number" min="240" max="3840" step="1" value="844"></label></div><button id="applyDimensions" class="apply-button" type="button">Apply viewport <span data-icon="arrow-right"></span></button></div>
+          <div class="panel-rule"></div>
+          <div class="setting-group"><div class="setting-title">INTERACTION <span>LIVE INPUT</span></div><p class="control-hint">Click, scroll, or focus a preview to interact. Send text directly to the selected page.</p><form id="typeForm"><input id="typeInput" type="text" maxlength="4096" placeholder="Type into active field" aria-label="Text to insert into selected page"><button type="submit" class="apply-button">Send text <span data-icon="corner-down-left"></span></button></form></div>
+          <div class="panel-rule"></div>
+          <div class="setting-group"><div class="setting-title">OUTPUT</div><button id="captureButton" class="output-action" type="button"><span data-icon="download"></span><span>Save PNG screenshot</span><span data-icon="arrow-up-right"></span></button><button id="refreshButton" class="output-action" type="button"><span data-icon="rotate-cw"></span><span>Reload this view</span><span data-icon="arrow-up-right"></span></button></div>
+        </div>
+        <div class="inspector-footer">Viewport actions run only against the selected isolated session.</div>
+      </aside>
+    </div>
+    <footer class="statusbar"><span class="status-brand"><span class="status-square"></span> PFx / RESPONSIVE</span><span class="status-separator"></span><span id="footerMessage">Waiting for local Core connection</span><span class="status-spacer"></span><span>NO CLOUD RENDERING</span><span class="footer-build">v0.2 ALPHA</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

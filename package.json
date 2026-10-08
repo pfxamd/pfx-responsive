@@ -1,12 +1,15 @@
 {
   "name": "pfx-responsive",
-  "version": "0.1.0-alpha.0",
+  "version": "0.2.0-alpha.1",
   "private": true,
   "type": "module",
-  "description": "Local-first responsive website preview workspace built on PFx Preview Core",
-  "engines": { "node": ">=22" },
+  "description": "PFx Responsive local-first interactive multiview browser studio",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "check": "node --check src/preview-client.js && node --check src/workspace.js && node --check tests/workspace.test.js && node --check tests/preview-client.test.js",
+    "start": "node src/local-server.js",
+    "check": "node --check src/preview-client.js && node --check src/workspace.js && node --check src/browser-client.js && node --check src/local-server.js && node --check public/app.js && node --test tests/*.test.js",
     "test": "node --test tests/*.test.js"
   }
 }
