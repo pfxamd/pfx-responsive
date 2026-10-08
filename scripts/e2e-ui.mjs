@@ -15,8 +15,17 @@ const browser = await browsers[browserName].launch({
 });
 const page = await browser.newPage({viewport: {width: 1550, height: 900}, acceptDownloads: true});
 const problems = [];
+const apiFailures = [];
 page.on('pageerror', error => problems.push(error.message));
 page.on('console', message => { if (message.type() === 'error') problems.push(message.text()); });
+page.on('response', response => {
+  if (response.url().includes('/api/') && response.status() >= 400) {
+    apiFailures.push({path: new URL(response.url()).pathname, status: response.status()});
+  }
+});
+page.on('requestfailed', req => {
+  if (req.url().includes('/api/')) apiFailures.push({path:new URL(req.url()).pathname, error:req.failure()?.errorText});
+});
 try {
   await page.goto('http://127.0.0.1:4188/', { waitUntil: 'domcontentloaded', timeout: 20_000 });
   try {
@@ -33,8 +42,19 @@ try {
   await page.locator('#urlInput').fill('https://example.com/');
   await page.locator('#openButton').click();
   await page.waitForFunction(() => document.querySelectorAll('.preview-card').length === 3, {timeout: 30_000});
-  await page.waitForFunction(() => [...document.querySelectorAll('.preview-card')].every(card =>
-    card.querySelector('[data-field=status]')?.textContent === 'LIVE'), null, {timeout: 45_000});
+  try {
+    await page.waitForFunction(() => [...document.querySelectorAll('.preview-card')].every(card =>
+      card.querySelector('[data-field=status]')?.textContent === 'LIVE'), null, {timeout: 45_000});
+  } catch(error) {
+    const cards = await page.locator('.preview-card').evaluateAll(nodes => nodes.map(card => ({
+      device:card.querySelector('.preview-top-text strong')?.textContent,
+      status:card.querySelector('[data-field=status]')?.textContent,
+      message:card.querySelector('[data-field=url]')?.textContent,
+      placeholder:card.querySelector('.screen-placeholder span')?.textContent
+    })));
+    console.log(JSON.stringify({browser:browserName,phase:'live-views',cards,apiFailures,pageErrors:problems}));
+    throw error;
+  }
   await page.waitForFunction(() => [...document.querySelectorAll('.device-screen img')].some(image =>
     !image.hidden && image.naturalWidth > 0), null, {timeout: 45_000});
   assert.deepEqual(await page.locator('.preview-top-text strong').allTextContents(), ['Mobile','Tablet','Desktop']);
