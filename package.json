@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node src/local-server.js",
-    "check": "node --check src/preview-client.js && node --check src/workspace.js && node --check src/browser-client.js && node --check src/local-server.js && node --check public/app.js && node --test tests/*.test.js",
+    "check": "node --check src/preview-client.js && node --check src/workspace.js && node --check src/browser-client.js && node --check src/local-server.js && node --check public/app.js && node --test tests/*.test.js && node --check scripts/e2e-ui.mjs",
     "test": "node --test tests/*.test.js"
   }
 }

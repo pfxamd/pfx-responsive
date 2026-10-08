@@ -14,3 +14,48 @@ jobs:
           node-version: '22'
       - run: npm run check
       - run: npm test
+  real-browser-integration:
+    needs: foundation
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout pinned isolated Core for integration test
+        uses: actions/checkout@v4
+        with:
+          repository: pfxamd/PFx-Preview-Core
+          ref: 5b83aaf998535138ad50778b7bac49fe6eb51f3c
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser driver in pinned Core
+        working-directory: core
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npx playwright-core install chromium
+      - name: Verify namespace isolation prerequisites
+        run: bash core/scripts/prepare-ci-netns.sh
+      - name: Run actual Core and local app
+        env:
+          PFX_PREVIEW_TOKEN: ci-long-test-secret-only-not-for-production-283749
+          PFX_RESPONSIVE_CORE_TOKEN: ci-long-test-secret-only-not-for-production-283749
+          PFX_REQUIRE_FS_SANDBOX: '1'
+        run: |
+          set -eu
+          node core/src/server.js > /tmp/pfx-core.log 2>&1 &
+          node src/local-server.js > /tmp/pfx-app.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:4177/health > /dev/null && curl --silent --fail http://127.0.0.1:4188/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo 'Core or app did not start:'
+          tail -20 /tmp/pfx-core.log /tmp/pfx-app.log
+          exit 1
+      - name: Real Chromium UI session / frame / screenshot integration
+        run: node scripts/e2e-ui.mjs
+      - name: Report service diagnostics on failure
+        if: failure()
+        run: |
+          tail -25 /tmp/pfx-core.log 2>/dev/null || true
+          tail -25 /tmp/pfx-app.log 2>/dev/null || true
