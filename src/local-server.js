@@ -11,6 +11,7 @@ const MIME = { '/': ['public/index.html', 'text/html; charset=utf-8'],
   '/app.js': ['public/app.js', 'text/javascript; charset=utf-8'],
   '/browser-client.js': ['src/browser-client.js', 'text/javascript; charset=utf-8'],
   '/workspace.js': ['src/workspace.js', 'text/javascript; charset=utf-8'],
+  '/stream-supervisor.js': ['src/stream-supervisor.js', 'text/javascript; charset=utf-8'],
   '/logo.svg': ['public/logo.svg', 'image/svg+xml'] };
 const MAX_BODY = 32_768;
 const WORKSPACE_IDLE_MS = 120_000;

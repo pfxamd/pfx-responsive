@@ -41,6 +41,10 @@ test('local gateway binds to loopback, serves UI securely and rejects invalid ho
     assert.match(page.headers.get('content-security-policy'),/default-src 'none'/);
     assert.equal(page.headers.get('referrer-policy'),'same-origin');
     const text=await page.text();assert.match(text,/PFx Responsive/);
+    const streamModule=await fetch(`${origin}/stream-supervisor.js`);
+    assert.equal(streamModule.status,200);
+    assert.match(streamModule.headers.get('content-type'),/text\/javascript/);
+    assert.match(await streamModule.text(),/class StreamSupervisor/);
     const forbidden=await fetch(`${origin}/api/bootstrap`);assert.equal(forbidden.status,403);
     const hostile=await api(origin,'/bootstrap',{headers:{origin:'https://evil.example'}});assert.equal(hostile.status,403);
     const rebound = await new Promise((resolve,reject)=>{const request=httpRequest(origin,{headers:{Host:'evil.example'}},res=>{res.resume();resolve(res.statusCode);});request.on('error',reject);request.end();});assert.equal(rebound,403);

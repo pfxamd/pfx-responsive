@@ -2,13 +2,13 @@
 
 A **local-first, live responsive website preview workspace**, driven by the independently developed [PFx Preview Core](https://github.com/pfxamd/PFx-Preview-Core). It is not a screenshot mockup or a remote screenshot API. The website is opened in Core's isolated Chromium browser; preview frames, mouse and keyboard input, viewport resizing and PNG captures are real Core operations.
 
-**Release:** `0.2.0-alpha.1` — local interactive UI; **not approved for public Internet deployment**.
+**Release:** `0.2.0-alpha.2` — local interactive UI; **not approved for public Internet deployment**.
 
 ## Features
 
 - Dark/light studio interface, responsive controls, and an intentional no-scroll desktop workspace.
 - Up to four simultaneous mobile/tablet/desktop viewports; editable dimensions (240–3840 CSS pixels).
-- Shared website address, independent viewport navigation and refresh, real live image streams, click/scroll/keyboard forwarding, and full-resolution PNG screenshots.
+- Shared website address, independent viewport navigation and refresh, real live image streams, click/scroll/keyboard forwarding, and full-resolution PNG screenshots. A dropped or budget-ended stream is reconnected with bounded backoff; after repeated failures the view clearly shows PAUSED instead of claiming that an old frame is live.
 - Local gateway `src/local-server.js` serves the interface and forwards only documented API actions to Core. **No Core bearer credential enters browser JavaScript, HTML, storage, or public build assets.**
 - Per-browser workspace ownership: a random in-memory key separates tabs. Sessions and streams are cleaned up on explicit close, pagehide and idle expiry.
 - Clear **disconnected** state if Core is missing or authentication fails; never substitutes fake previews.

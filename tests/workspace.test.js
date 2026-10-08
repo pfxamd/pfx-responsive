@@ -114,3 +114,23 @@ test('dispose pending create and forbid further work', async ()=>{
   assert.throws(()=>workspace.add({url:'https://example.com/'}),/disposed/);
   assert.equal(client.events.filter(x=>x[0]==='close').length,1);
 });
+
+
+test('successful live frames clear previous stream errors after a connection recovery', async () => {
+  const client=fakeClient();
+  let attempts=0;
+  client.stream=async function*() {
+    if(++attempts===1) throw new Error('Network interrupted');
+    yield {mime:'image/jpeg',data:'YWJj',metadata:{}};
+  };
+  const workspace=new PreviewWorkspace({client});
+  const id=workspace.add({url:'https://example.com/'});
+  await tick();
+  await workspace.startStream(id,()=>{});
+  assert.match(workspace.views[0].error,/Network interrupted/);
+  const frames=[];
+  await workspace.startStream(id,frame=>frames.push(frame));
+  assert.equal(workspace.views[0].error,null);
+  assert.equal(frames.length,1);
+  await workspace.dispose();
+});

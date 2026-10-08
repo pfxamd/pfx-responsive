@@ -131,6 +131,7 @@ export class PreviewWorkspace {
       try {
         for await (const frame of this.client.stream(entry.sessionId, { signal: controller.signal })) {
           if (controller.signal.aborted || entry.status !== 'ready') break;
+          if (entry.error !== null) { entry.error = null; this.notify(); }
           onFrame(frame);
         }
       } catch (error) {

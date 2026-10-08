@@ -1,5 +1,6 @@
 import { LocalGatewayClient } from '/browser-client.js';
 import { PreviewWorkspace } from '/workspace.js';
+import { StreamSupervisor } from '/stream-supervisor.js';
 
 const icons = {
   'refresh-cw':'<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/>',
@@ -33,12 +34,13 @@ for (const node of document.querySelectorAll('[data-icon]')) node.replaceChildre
 const $ = id => document.getElementById(id);
 const client = new LocalGatewayClient();
 const workspace = new PreviewWorkspace({ client, maxViews: 4 });
+const streams = new StreamSupervisor({ workspace });
 const presets = { mobile:{label:'Mobile',width:390,height:844,icon:'smartphone'},
   tablet:{label:'Tablet',width:768,height:1024,icon:'tablet'},
   desktop:{label:'Desktop',width:1440,height:900,icon:'monitor'} };
 const cardMap = new Map();
 const screenImages = new Map();
-const streamStarted = new Set();
+const streamStates = new Map();
 const labels = new Map();
 let selected = null;
 let online = false;
@@ -192,17 +194,35 @@ function fitCard(id) {
   source.screen.style.width=`${Math.max(30,Math.floor(view.viewport.width*ratio))}px`;
   source.screen.style.height=`${Math.max(30,Math.floor(view.viewport.height*ratio))}px`;
 }
+function liveLabel(id) {
+  return ({connecting:'CONNECTING',live:'LIVE',retrying:'RECONNECTING',paused:'PAUSED'})[streamStates.get(id)] || 'WAITING';
+}
+function updateStreamBadge(id) {
+  const card=cardMap.get(id), view=workspace.views.find(v=>v.id===id);
+  if(!card || view?.status!=='ready')return;
+  const state=streamStates.get(id);
+  card.querySelector('[data-field=status]').textContent=liveLabel(id);
+  card.querySelector('[data-field=dot]').className=`dot ${state==='live'?'ready':state==='paused'?'error':'creating'}`;
+  const source=screenImages.get(id);
+  if(source?.image.hidden){
+    source.caption.textContent=state==='paused'?'Stream unavailable — close and reopen':
+      state==='retrying'?'Reconnecting live preview':state==='connecting'?'Connecting live stream':'Waiting for live frames';
+    source.placeholder.classList.toggle('is-error',state==='paused');
+  }
+}
 function startStream(view) {
-  if (streamStarted.has(view.id)) return;
-  streamStarted.add(view.id);
+  if(streams.has(view.id) || !online)return;
   try {
-    void workspace.startStream(view.id, frame => {
-      const source=screenImages.get(view.id);
-      if (!source || !cardMap.has(view.id)) return;
-      source.image.src=`data:image/jpeg;base64,${frame.data}`;
-      source.image.hidden=false;
-      source.placeholder.hidden=true;
-    }).catch(()=>{});
+    streams.watch(view.id, {
+      onFrame(frame) {
+        const source=screenImages.get(view.id);
+        if(!source || !cardMap.has(view.id))return;
+        source.image.src=`data:image/jpeg;base64,${frame.data}`;
+        source.image.hidden=false;
+        source.placeholder.hidden=true;
+      },
+      onState(state) { streamStates.set(view.id,state); updateStreamBadge(view.id); }
+    });
   } catch(e) { showMessage(e.message); }
 }
 function render(views) {
@@ -210,7 +230,8 @@ function render(views) {
   for(const [id,card] of cardMap){
     if(!ids.has(id)){
       card.resizeObserver.disconnect(); card.remove(); cardMap.delete(id);
-      screenImages.delete(id); streamStarted.delete(id); labels.delete(id);
+      void streams.stop(id);
+      screenImages.delete(id); streamStates.delete(id); labels.delete(id);
     }
   }
   const empty = views.length===0;
@@ -242,17 +263,17 @@ function render(views) {
     card.querySelector('.preview-top-text strong').textContent = getLabel(view.id);
     card.querySelector('.preview-device-icon').replaceChildren(icon(labels.get(view.id)?.icon ?? 'monitor'));
     card.querySelector('[data-field=dimensions]').textContent=`${view.viewport.width} × ${view.viewport.height}`;
-    card.querySelector('[data-field=status]').textContent=({creating:'LOADING',ready:'LIVE',closing:'CLOSING',error:'ERROR'})[view.status]||view.status.toUpperCase();
-    card.querySelector('[data-field=dot]').className=`dot ${view.status}`;
+    card.querySelector('[data-field=status]').textContent=view.status==='ready'?liveLabel(view.id):({creating:'LOADING',closing:'CLOSING',error:'ERROR'})[view.status]||view.status.toUpperCase();
+    card.querySelector('[data-field=dot]').className=`dot ${view.status==='ready'?(streamStates.get(view.id)==='live'?'ready':streamStates.get(view.id)==='paused'?'error':'creating'):view.status}`;
     card.querySelector('[data-field=url]').textContent=view.status==='error'?view.error:view.url;
     const source=screenImages.get(view.id);
     if(source && source.image.hidden){
       source.placeholder.classList.toggle('is-error',view.status==='error');
       source.placeholder.replaceChild(icon(view.status==='error'?'alert-circle':'loader-circle'),source.placeholder.firstChild);
-      source.caption.textContent=view.status==='error'?view.error:({creating:'Starting browser session',closing:'Closing session',ready:'Waiting for live frames'})[view.status];
+      source.caption.textContent=view.status==='error'?view.error:({creating:'Starting browser session',closing:'Closing session',ready:streamStates.get(view.id)==='retrying'?'Reconnecting live preview':streamStates.get(view.id)==='paused'?'Stream unavailable — close and reopen':'Waiting for live frames'})[view.status];
     }
     fitCard(view.id);
-    if(view.status==='ready'&&!streamStarted.has(view.id)) queueMicrotask(()=>{
+    if(view.status==='ready'&&!streams.has(view.id) && online) queueMicrotask(()=>{
       const actual=workspace.views.find(v=>v.id===view.id);
       if(actual?.status==='ready')startStream(actual);
     });
@@ -271,6 +292,7 @@ async function checkConnection(){
   $('footerMessage').textContent=online?'Local Chromium engine connected':state==='unconfigured'?'Configure PFX_RESPONSIVE_CORE_TOKEN on the local server':state==='unauthorized'?'Core rejected the configured token':'Unable to reach the local preview Core';
   $('openButton').disabled=!online;
   for(const button of $('presetList').querySelectorAll('.preset'))button.disabled=!online||workspace.views.length>=4;
+  if(online)render(workspace.views);
 }
 function addPreview(url,presetName){
   const preset=presets[presetName];
