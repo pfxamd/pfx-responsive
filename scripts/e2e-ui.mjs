@@ -11,7 +11,12 @@ page.on('pageerror', error => problems.push(error.message));
 page.on('console', message => { if (message.type() === 'error') problems.push(message.text()); });
 try {
   await page.goto('http://127.0.0.1:4188/', { waitUntil: 'domcontentloaded', timeout: 20_000 });
-  await page.locator('#connectionText').getByText('Core connected').waitFor({timeout: 20_000});
+  try {
+    await page.waitForFunction(() => document.querySelector('#connectionText')?.textContent === 'Core connected', null, {timeout: 20_000});
+  } catch (error) {
+    console.log(JSON.stringify({ connectionText: await page.locator('#connectionText').textContent(), pageErrors: problems }));
+    throw error;
+  }
   assert.equal(await page.locator('#openButton').isEnabled(), true);
   await page.locator('#urlInput').fill('https://example.com/');
   await page.locator('#openButton').click();
