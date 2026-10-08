@@ -39,12 +39,35 @@ test('local gateway binds to loopback, serves UI securely and rejects invalid ho
   await withApp({token:credential},async origin=>{
     const page=await fetch(origin); assert.equal(page.status,200);
     assert.match(page.headers.get('content-security-policy'),/default-src 'none'/);
+    assert.equal(page.headers.get('referrer-policy'),'same-origin');
     const text=await page.text();assert.match(text,/PFx Responsive/);
     const forbidden=await fetch(`${origin}/api/bootstrap`);assert.equal(forbidden.status,403);
     const hostile=await api(origin,'/bootstrap',{headers:{origin:'https://evil.example'}});assert.equal(hostile.status,403);
     const rebound = await new Promise((resolve,reject)=>{const request=httpRequest(origin,{headers:{Host:'evil.example'}},res=>{res.resume();resolve(res.statusCode);});request.on('error',reject);request.end();});assert.equal(rebound,403);
     const key=await boot(origin);
     const s=await api(origin,'/status',{key});assert.deepEqual(await s.json(),{state:'offline'});
+  });
+});
+
+test('same-origin browser POST is accepted, opaque/null origins remain blocked', async () => {
+  await mockCore(async coreURL => {
+    await withApp({token:credential,coreURL},async origin => {
+      const key=await boot(origin);
+      const request={key,method:'POST',json:{url:'https://example.com/'}};
+      const legitimate=await api(origin,'/sessions',{
+        ...request,headers:{origin,'sec-fetch-site':'same-origin'}
+      });
+      assert.equal(legitimate.status,201);
+      const opaque=await api(origin,'/sessions',{
+        ...request,headers:{origin:'null','sec-fetch-site':'same-origin'}
+      });
+      assert.equal(opaque.status,403);
+      const foreign=await api(origin,'/sessions',{
+        ...request,headers:{origin:'http://127.0.0.1:9999','sec-fetch-site':'same-site'}
+      });
+      assert.equal(foreign.status,403);
+      await api(origin,`/sessions/${mockId}`,{key,method:'DELETE'});
+    });
   });
 });
 

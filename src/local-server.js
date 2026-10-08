@@ -47,7 +47,10 @@ export function createLocalAppServer({ token = process.env.PFX_RESPONSIVE_CORE_T
   const workspaces = new Map();
   const origin = () => `http://127.0.0.1:${server.address()?.port ?? port}`;
   const baseHeaders = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
-    'referrer-policy': 'no-referrer', 'cross-origin-resource-policy': 'same-origin',
+    // Firefox and WebKit send Origin: null for same-origin POSTs when the
+    // document uses `no-referrer`. `same-origin` keeps outbound Referer
+    // suppressed for other origins without weakening strict Origin checking.
+    'referrer-policy': 'same-origin', 'cross-origin-resource-policy': 'same-origin',
     'x-frame-options': 'DENY' };
   const send = (res, code, body) => {
     if (res.destroyed || res.writableEnded) return;
