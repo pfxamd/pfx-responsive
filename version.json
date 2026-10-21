@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "app",
+  "product": "PFx Responsive",
+  "channel": "Alpha",
+  "version": "0.3.0-alpha.1",
+  "label": "Alpha 0.3.0-alpha.1",
+  "commit": "5973b4b0ba0bde2c84916899b9b6d4efaf3a272e",
+  "sourceDate": "2026-10-21T22:23:51+01:00"
+}
