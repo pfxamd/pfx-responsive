@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "app",
+  "product": "PFx Responsive",
+  "channel": "Alpha",
+  "baseVersion": "0.3.0-alpha.0",
+  "baseline": "abfdd696e0f8554bf1671bc5964f76be7a775000",
+  "sourcePaths": [
+    "src",
+    "public",
+    "scripts",
+    "tests",
+    "package.json",
+    "package-lock.json",
+    ".pfx",
+    ".github/workflows/version.yml"
+  ],
+  "jsonVersions": [
+    "package.json"
+  ],
+  "npmLocks": [],
+  "cargoVersions": [],
+  "cargoNames": [],
+  "cargoLocks": [],
+  "changelogPath": false,
+  "allowGeneratedSourcePaths": true,
+  "ignoreSubjects": [
+    "chore(release): sync core version metadata [skip ci]"
+  ]
+}

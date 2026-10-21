@@ -1,5 +1,7 @@
 # PFx Responsive
 
+[![Source version](./version-badge.svg)](./version.json)
+
 A **local-first, live responsive website preview workspace**, driven by the independently developed [PFx Preview Core](https://github.com/pfxamd/PFx-Preview-Core). It is not a screenshot mockup or a remote screenshot API. The website is opened in Core's isolated Chromium browser; preview frames, mouse and keyboard input, viewport resizing and PNG captures are real Core operations.
 
 **Release:** `0.2.0-alpha.2` — local interactive UI; **not approved for public Internet deployment**.
